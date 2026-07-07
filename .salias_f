@@ -1,0 +1,90 @@
+# Headplane - project aliases and functions
+# Feature-complete web UI for Headscale. Fork of tale/headplane.
+# All commands defined here, sourced by .salias. Run 'help' to see them.
+
+# ── Environment ──
+# systemd unit name for a native deploy (override if yours differs)
+set -gx HEADPLANE_UNIT 'headplane'
+
+# ── Help ──
+# Relative path: .salias_f is always sourced with the project dir as PWD.
+function help
+    clear
+    cat ./.salias_help.txt
+end
+
+# ── Setup ──
+alias install='pnpm install'
+
+# ── Dev / Run ──
+# dev:app uses config.example.yaml + pino-pretty (see package.json)
+alias dev='pnpm dev:app'
+alias devall='pnpm dev'
+alias docs='pnpm docs:dev'
+alias serve='node build/server/index.js'
+
+# ── Dev stack (docker: Headscale + Caddy, see compose.yaml) ──
+alias up='docker compose up -d'
+alias down='docker compose down'
+alias restart='docker compose restart'
+alias logs='docker compose logs -f'
+
+# Run a Headscale CLI command inside the dev-stack container, e.g. `hs nodes list`
+function hs
+    docker exec headscale headscale $argv
+end
+
+# ── Build ──
+# Full build = wasm + app + agent + healthcheck (needs Go + pnpm)
+alias build='./build.sh'
+alias buildapp='pnpm build'
+alias buildwasm='./build.sh --wasm'
+alias buildagent='./build.sh --agent'
+alias buildhc='./build.sh --healthcheck'
+
+# Remove build output + generated WASM artifacts
+function clean
+    rm -rf build public/hp_ssh.wasm public/wasm_exec.js
+    echo "cleaned build/ and public WASM artifacts"
+end
+
+# ── Deploy (docker image) ──
+# Production distroless image
+alias image='docker build -t headplane:local .'
+# Debug variant with a real shell (target: debug-shell)
+alias imagedebug='docker build --target debug-shell -t headplane:debug .'
+
+# ── Run as Docker container (the Headplane app itself) ──
+# Runs the locally-built image. Edit ports/volumes/config for your setup;
+# default container config path is /etc/headplane/config.yaml, port 3000.
+function apprun
+    docker run -d --name headplane-app -p 3000:3000 \
+        -v (pwd)/config.example.yaml:/etc/headplane/config.yaml:ro \
+        headplane:local
+end
+alias appstop='docker rm -f headplane-app'
+alias apprestart='docker restart headplane-app'
+alias applogs='docker logs -f headplane-app'
+alias appstatus='docker ps --filter name=headplane-app'
+
+# ── Run as systemd service (native deploy) ──
+# System unit by default — start/stop need root (sudo). Override HEADPLANE_UNIT above.
+alias hpstart='systemctl start $HEADPLANE_UNIT'
+alias hpstop='systemctl stop $HEADPLANE_UNIT'
+alias hprestart='systemctl restart $HEADPLANE_UNIT'
+alias hpstatus='systemctl status $HEADPLANE_UNIT --no-pager'
+alias hplog='journalctl -u $HEADPLANE_UNIT --no-pager -n 50'
+alias hplogf='journalctl -u $HEADPLANE_UNIT -f'
+
+# ── Quality ──
+alias check='pnpm typecheck'
+alias lint='pnpm lint'
+alias lintfix='pnpm lint --fix'
+alias fmt='pnpm format'
+alias test='pnpm test:unit'
+alias testi='pnpm test:integration'
+
+# Run the full test suite (unit + integration; integration needs Docker)
+function testall
+    pnpm test:unit; and pnpm test:integration
+end

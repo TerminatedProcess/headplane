@@ -1,0 +1,55 @@
+HEADPLANE - web UI for Headscale (fork of tale/headplane)
+
+SETUP
+  install           pnpm install
+
+DEV / RUN
+  dev               run the app (dev:app, config.example.yaml + pretty logs)
+  devall            run app + docs dev servers together
+  docs              run the VitePress docs site
+  serve             run the production build (node build/server/index.js)
+
+DEV STACK (docker: Headscale + Caddy)
+  up                start the dev stack detached
+  down              stop the dev stack
+  restart           restart the dev stack
+  logs              follow dev stack logs
+  hs <args>         run a Headscale CLI command in the container
+
+BUILD
+  build             full build: wasm + app + agent + healthcheck (build.sh)
+  buildapp          build the React Router app only (pnpm build)
+  buildwasm         build the WebSSH WASM module
+  buildagent        build the hp_agent Go binary
+  buildhc           build the hp_healthcheck Go binary
+  clean             remove build/ and generated WASM artifacts
+
+DEPLOY (docker image)
+  image             build the production Docker image (headplane:local)
+  imagedebug        build the debug-shell image (headplane:debug)
+
+RUN AS CONTAINER (the Headplane app)
+  apprun            run the built image detached (headplane-app)
+  appstop           stop + remove the container
+  apprestart        restart the container
+  applogs           follow container logs
+  appstatus         show container status
+
+RUN AS SERVICE (systemd, native deploy)
+  hpstart           start the systemd unit ($HEADPLANE_UNIT, needs root)
+  hpstop            stop the unit
+  hprestart         restart the unit
+  hpstatus          show unit status
+  hplog             last 50 journal lines
+  hplogf            follow the journal
+
+QUALITY
+  check             typecheck (react-router typegen && tsc)
+  lint              lint (oxlint)
+  lintfix           lint and autofix
+  fmt               format (oxfmt)
+  test              run unit tests
+  testi             run integration tests (needs Docker)
+  testall           run unit + integration tests
+
+  help              show this help
